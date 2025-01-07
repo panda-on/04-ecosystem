@@ -2,9 +2,18 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use axum::{routing::get, Router};
+use opentelemetry::trace::TracerProvider as _;
+use opentelemetry::KeyValue;
+use opentelemetry_otlp::WithExportConfig;
+use opentelemetry_sdk::trace::{RandomIdGenerator, Tracer, TracerProvider};
+use opentelemetry_sdk::{runtime, Resource};
+use tokio::join;
 use tokio::{net::TcpListener, time::sleep};
+use tracing::instrument;
 use tracing::{debug, info, level_filters::LevelFilter, warn};
-use tracing_subscriber::{fmt::format::FmtSpan, layer::SubscriberExt as _, util::SubscriberInitExt as _, Layer};
+use tracing_subscriber::{
+    fmt::format::FmtSpan, layer::SubscriberExt as _, util::SubscriberInitExt as _, Layer,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -21,7 +30,15 @@ async fn main() -> Result<()> {
         .pretty()
         .with_filter(LevelFilter::DEBUG);
 
-    tracing_subscriber::registry().with(file).with(console).init();
+    let tracer = init_tracer()?;
+
+    let telemetry = tracing_opentelemetry::layer().with_tracer(tracer);
+
+    tracing_subscriber::registry()
+        .with(file)
+        .with(console)
+        .with(telemetry)
+        .init();
 
     tracing::info!("Hello tracing!");
     tracing::debug!("tracing debug");
@@ -29,9 +46,9 @@ async fn main() -> Result<()> {
 
     let addr = "0.0.0.0:8080";
     let app = Router::new().route("/", get(index_handler));
-    let listner = TcpListener::bind(addr).await?;
+    let listener = TcpListener::bind(addr).await?;
     info!("Starting server on {}", addr);
-    axum::serve(listner,app.into_make_service()).await?;
+    axum::serve(listener, app.into_make_service()).await?;
     Ok(())
 }
 
@@ -43,10 +60,51 @@ async fn index_handler() -> &'static str {
     ret
 }
 
+fn init_tracer() -> anyhow::Result<Tracer> {
+    Ok(TracerProvider::builder()
+        .with_batch_exporter(
+            opentelemetry_otlp::SpanExporter::builder()
+                .with_tonic()
+                .with_endpoint("http://localhost:4317")
+                .build()?,
+            runtime::Tokio,
+        )
+        .with_id_generator(RandomIdGenerator::default())
+        .with_max_events_per_span(32)
+        .with_max_attributes_per_span(64)
+        .with_resource(Resource::new(vec![KeyValue::new(
+            "service.name",
+            "axum-tracing",
+        )]))
+        .build()
+        .tracer("axum_tracing"))
+}
+
+#[instrument]
 async fn long_task() -> &'static str {
     let start = Instant::now();
-    sleep(Duration::from_millis(112)).await;
+    let sl = sleep(Duration::from_millis(12));
+
+    let t1 = task1();
+    let t2 = task2();
+    let t3 = task3();
+    join!(sl, t1, t2, t3);
     let elapsed = start.elapsed().as_millis();
     warn!(app.task_duration = elapsed, "task takes too long");
     "long task"
+}
+
+#[instrument]
+async fn task1() {
+    sleep(Duration::from_millis(10)).await;
+}
+
+#[instrument]
+async fn task2() {
+    sleep(Duration::from_millis(50)).await;
+}
+
+#[instrument]
+async fn task3() {
+    sleep(Duration::from_millis(30)).await;
 }

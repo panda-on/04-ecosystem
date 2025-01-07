@@ -14,7 +14,7 @@ fn main() -> Result<(), anyhow::Error> {
         "size of serde_json::Error: {}",
         size_of::<serde_json::Error>()
     );
-    println!("size of Strng: {}", size_of::<String>());
+    println!("size of String: {}", size_of::<String>());
 
     let filename = "non-existent-file.txt";
     let _fd =
