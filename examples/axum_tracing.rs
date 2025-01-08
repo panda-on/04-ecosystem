@@ -17,7 +17,7 @@ use tracing_subscriber::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let file_appender = tracing_appender::rolling::hourly("/tmp/logs", "prefix.log");
+    let file_appender = tracing_appender::rolling::hourly("/tmp/logs", "rust.ecosystem.usage.log");
     let (non_block, _gurad) = tracing_appender::non_blocking(file_appender);
 
     let file = tracing_subscriber::fmt::Layer::new()
@@ -40,9 +40,9 @@ async fn main() -> Result<()> {
         .with(telemetry)
         .init();
 
-    tracing::info!("Hello tracing!");
-    tracing::debug!("tracing debug");
-    tracing::info!("tracing warn");
+    info!("Hello tracing!");
+    debug!("tracing debug");
+    info!("tracing warn");
 
     let addr = "0.0.0.0:8080";
     let app = Router::new().route("/", get(index_handler));
@@ -52,6 +52,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
+// handle index request
 async fn index_handler() -> &'static str {
     debug!("index handler started");
     sleep(Duration::from_millis(10)).await;
@@ -61,6 +62,7 @@ async fn index_handler() -> &'static str {
 }
 
 fn init_tracer() -> anyhow::Result<Tracer> {
+    // new api version, using builder pattern to construct a TracerProvider then build a Tracer
     Ok(TracerProvider::builder()
         .with_batch_exporter(
             opentelemetry_otlp::SpanExporter::builder()
@@ -80,6 +82,7 @@ fn init_tracer() -> anyhow::Result<Tracer> {
         .tracer("axum_tracing"))
 }
 
+// generate span for long_task to find the performance bottleneck
 #[instrument]
 async fn long_task() -> &'static str {
     let start = Instant::now();

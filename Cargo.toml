@@ -8,15 +8,24 @@ license = "MIT or Apache-2.0"
 
 [dependencies]
 
+
 [dev-dependencies]
 anyhow = "1.0.95"
 axum = { version = "0.8.1", features = ["http2", "query", "tracing"] }
+chrono = "0.4.39"
+derive_builder = "0.20.2"
 opentelemetry = "0.27.1"
 opentelemetry_sdk = { version = "0.27.1", features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.27.0", features = ["tonic"] }
 serde_json = "1.0.134"
 thiserror = "2.0.9"
-tokio = { version = "1.42.0", features = ["rt", "rt-multi-thread", "macros", "net", "io-util"] }
+tokio = { version = "1.42.0", features = [
+    "io-util",
+    "macros",
+    "net",
+    "rt-multi-thread",
+    "rt",
+] }
 tracing = "0.1.41"
 tracing-appender = "0.2.3"
 tracing-opentelemetry = "0.28.0"
