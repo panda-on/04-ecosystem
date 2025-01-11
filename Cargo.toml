@@ -12,7 +12,7 @@ license = "MIT or Apache-2.0"
 [dev-dependencies]
 anyhow = "1.0.95"
 axum = { version = "0.8.1", features = ["http2", "query", "tracing"] }
-chrono = "0.4.39"
+chrono = { version = "0.4.39"}
 derive_builder = "0.20.2"
 opentelemetry = "0.27.1"
 opentelemetry_sdk = { version = "0.27.1", features = ["rt-tokio"] }

@@ -1,2 +1,17 @@
 ### index
 GET http://localhost:8080/
+
+
+### patch user
+
+PATCH http://localhost:8080/
+Content-Type: application/json
+
+{
+    "skills": [
+        "Rust",
+        "DeFi",
+        "NFT",
+        "Blockchain"
+    ]
+}
