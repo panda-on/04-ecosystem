@@ -7,6 +7,8 @@ license = "MIT or Apache-2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+chrono = { version = "0.4.39", features = ["serde"] }
+
 
 
 [dev-dependencies]
@@ -33,3 +35,7 @@ tracing-subscriber = { version = "0.3.19", features = ["env-filter"] }
 derive_more = "0.99.18"
 serde = { version = "1.0.217", features = ["derive"] }
 strum = { version = "0.26.3", features = ["derive"] }
+base64 = "0.22.1"
+serde_with = "3.12.0"
+chacha20poly1305 = "0.10.1"
+http = "1.2.0"
